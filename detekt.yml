@@ -1,0 +1,23 @@
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 60
+
+style:
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+  WildcardImport:
+    active: true
+  UnusedImports:
+    active: true
+  MagicNumber:
+    active: true
+    excludes: ['**/test/**']
