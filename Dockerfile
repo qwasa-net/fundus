@@ -11,7 +11,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends curl unzip ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY Dockerfile _cached_download[s]/ /tmp/_cached/
+COPY _cached_download[s]/ /tmp/_cached/
 
 # Install Android command line tools
 RUN mkdir -pv ${ANDROID_HOME}/cmdline-tools \

@@ -1,7 +1,18 @@
 DOCKER_IMAGE := fundus-builder
-APK_SRC := app/build/outputs/apk/debug/app-debug.apk
-APK_DST := _build/fundus.apk
+
 GRADLE_VERSION := 8.10.2
+
+APK_DEBUG ?= 1
+
+ifeq ($(APK_DEBUG),1)
+APK_SRC := app/build/outputs/apk/debug/app-debug.apk
+ASSEMBLE_CMD := assembleDebug
+else
+APK_SRC := app/build/outputs/apk/release/app-release.apk
+ASSEMBLE_CMD := assembleRelease
+endif
+
+APK_DST := _build/fundus.apk
 
 DOCKER := DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=plain docker
 
@@ -28,35 +39,35 @@ help:
 	@echo "> make tea"
 	@echo
 
-tea: prepare-builder compile-in-container ## 1,2,go
+tea: prepare-builder compile-in-container ## 1, 2, go
 
-prepare-builder: ## подготовить образ контейнера
+prepare-builder: ## prepare docker image
 	$(DOCKER) build --build-arg GRADLE_VERSION=$(GRADLE_VERSION) -t $(DOCKER_IMAGE) .
 
-compile-in-container: .gradle_cache _build ## собрать debug APK в _build/
-	$(DOCKER_RUN) gradle assembleDebug
+compile-in-container: .gradle_cache _build ## build debug APK to _build/
+	$(DOCKER_RUN) gradle $(ASSEMBLE_CMD)
 	cp -v $(APK_SRC) $(APK_DST)
 	ls -lh $(APK_DST)
 
-compile-offline-in-container: .gradle_cache _build ## собрать APK в _build/
-	$(DOCKER_RUN) gradle assembleDebug --offline
+compile-offline-in-container: .gradle_cache _build ## build APK offline
+	$(DOCKER_RUN) gradle $(ASSEMBLE_CMD) --offline
 	cp -v $(APK_SRC) $(APK_DST)
 	ls -lh $(APK_DST)
 
-clean-in-container: .gradle_cache ## очистить сборку (gradlew clean)
-	$(DOCKER_RUN) gradle clean
+lint-in-container: .gradle_cache ## check style (lint+ktlint+detekt)
+	$(DOCKER_RUN) gradle lintDebug ktlintCheck detekt --rerun-tasks -i
 
-lint-in-container: .gradle_cache ## запустить lintDebug в контейнере
-	$(DOCKER_RUN) gradle lintDebug
-
-ktlint-in-container: .gradle_cache ## проверить стиль Kotlin (ktlint)
-	$(DOCKER_RUN) gradle ktlintCheck
-
-format-in-container: .gradle_cache ## автоформатирование Kotlin (ktlint)
+format-in-container: .gradle_cache ## auto format (ktlint)
 	$(DOCKER_RUN) gradle ktlintFormat
 
 shell-in-container:
 	$(DOCKER_RUN) /bin/bash
+
+clean-in-container: .gradle_cache ## clean build (gradlew clean)
+	$(DOCKER_RUN) gradle clean
+
+clean: ## clear caches
+	rm -rI .gradle_cache _build .kotlin .gradle app/build
 
 .gradle_cache _build:
 	mkdir -pv $@
