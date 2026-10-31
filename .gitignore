@@ -1,0 +1,14 @@
+/.*
+/_*
+
+!/.gitignore
+!/.editorconfig
+
+.gradle_cache/
+.gradle/
+**/build/
+
+local.properties
+
+*.iml
+.DS_Store
